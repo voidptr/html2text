@@ -59,6 +59,7 @@ GOOGLE_LIST_INDENT = 36
 
 IGNORE_ANCHORS = False
 IGNORE_IMAGES = False
+PASSTHROUGH_IMAGES = False
 IGNORE_EMPHASIS = False
 
 ### Entity Nonsense ###
@@ -192,6 +193,7 @@ class HTML2Text(HTMLParser.HTMLParser):
         self.google_list_indent = GOOGLE_LIST_INDENT
         self.ignore_links = IGNORE_ANCHORS
         self.ignore_images = IGNORE_IMAGES
+        self.passthrough_images = PASSTHROUGH_IMAGES
         self.ignore_emphasis = IGNORE_EMPHASIS
         self.google_doc = False
         self.ul_item_mark = '*'
@@ -493,7 +495,7 @@ class HTML2Text(HTMLParser.HTMLParser):
                                 self.a.append(a)
                             self.o("][" + str(a['count']) + "]")
 
-        if tag == "img" and start and not self.ignore_images:
+        if tag == "img" and start and ( not self.ignore_images or not self.passthrough_images ):
             if has_key(attrs, 'src'):
                 attrs['href'] = attrs['src']
                 alt = attrs.get('alt', '')
@@ -511,6 +513,9 @@ class HTML2Text(HTMLParser.HTMLParser):
                         attrs['outcount'] = self.outcount
                         self.a.append(attrs)
                     self.o("[" + str(attrs['count']) + "]")
+
+#        if tag == "img" and start and self.passthrough_images:
+#            HTML
 
         if tag == 'dl' and start: self.p()
         if tag == 'dt' and not start: self.pbr()
@@ -842,6 +847,8 @@ def main():
         default=IGNORE_ANCHORS, help="don't include any formatting for links")
     p.add_option("--ignore-images", dest="ignore_images", action="store_true",
         default=IGNORE_IMAGES, help="don't include any formatting for images")
+    p.add_option("--passthrough-images", dest="passthrough_images", action="store_true",
+        default=PASSTHROUGH_IMAGES, help="leave img tags alone")        
     p.add_option("-g", "--google-doc", action="store_true", dest="google_doc",
         default=False, help="convert an html-exported Google Document")
     p.add_option("-d", "--dash-unordered-list", action="store_true", dest="ul_style_dash",
@@ -903,6 +910,7 @@ def main():
     h.ignore_emphasis = options.ignore_emphasis
     h.ignore_links = options.ignore_links
     h.ignore_images = options.ignore_images
+    h.passthrough_images = options.passthrough_images
     h.google_doc = options.google_doc
     h.hide_strikethrough = options.hide_strikethrough
     h.escape_snob = options.escape_snob
